@@ -4,6 +4,14 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 
+from app.core.logging import configure_logging
+
+import logging
+
+
+configure_logging()
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -11,7 +19,7 @@ async def lifespan(app: FastAPI):
     Application startup/shutdown lifecycle.
     """
 
-    print(f"Starting {settings.app_name}")
+    logger.info("Starting %s", settings.app_name)
 
     # TODO:
     # Initialise logging
@@ -21,7 +29,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    print(f"Stopping {settings.app_name}")
+    logger.info("Stopping %s", settings.app_name)
 
     # TODO:
     # Stop scheduler
