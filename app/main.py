@@ -8,10 +8,12 @@ from app.core.logging import configure_logging
 
 import logging
 
+from app.api.router import api_router
 
 configure_logging()
 
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,4 +46,4 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Routers will be registered here in later steps.
+app.include_router(api_router)
