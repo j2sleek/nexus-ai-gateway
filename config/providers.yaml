@@ -1,0 +1,21 @@
+providers:
+
+  dashscope:
+    enabled: true
+    api_key_env: DASHSCOPE_API_KEY
+
+  gemini:
+    enabled: true
+    api_key_env: GEMINI_API_KEY
+
+  mistral:
+    enabled: true
+    api_key_env: MISTRAL_API_KEY
+
+  openrouter:
+    enabled: true
+    api_key_env: OPENROUTER_API_KEY
+
+  litellm:
+    enabled: true
+    endpoint: http://127.0.0.1:4000

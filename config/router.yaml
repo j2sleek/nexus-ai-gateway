@@ -1,0 +1,53 @@
+version: 1
+
+default_provider: litellm
+
+routing:
+
+  coding:
+    primary: qwen-coder
+    fallbacks:
+      - mistral-coding
+      - claude-code-gemini
+      - free-auto
+
+  reasoning:
+    primary: deepseek-r1
+    fallbacks:
+      - qwen-reasoning
+      - claude-code
+      - free-auto
+
+  vision:
+    primary: gemini-flash
+    fallbacks:
+      - qwen-vl
+      - claude-code-gemini
+
+  general:
+    primary: qwen-instruct
+    fallbacks:
+      - mistral-general
+      - free-auto
+
+  heavy:
+    primary: mistral-large
+    fallbacks:
+      - qwen-max
+      - claude-code-heavy
+
+policies:
+
+  retry_attempts: 2
+
+  timeout_seconds: 120
+
+  enable_fallbacks: true
+
+  enable_streaming: true
+
+  enable_cost_optimisation: true
+
+  enable_latency_optimisation: true
+
+  enable_capability_check: true
