@@ -2,9 +2,7 @@ from app.providers.base import BaseProvider
 
 
 class OllamaProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("ollama")
+    provider_name = "ollama"
 
     async def health(self):
         raise NotImplementedError

@@ -1,10 +1,8 @@
 from app.providers.base import BaseProvider
 
 
-class DeepseekProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("deepseek")
+class DeepSeekProvider(BaseProvider):
+    provider_name = "deepseek"
 
     async def health(self):
         raise NotImplementedError

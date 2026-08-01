@@ -2,9 +2,7 @@ from app.providers.base import BaseProvider
 
 
 class LiteLLMProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("litellm")
+    provider_name = "litellm"
 
     async def health(self):
         raise NotImplementedError

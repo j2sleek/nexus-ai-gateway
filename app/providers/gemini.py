@@ -2,9 +2,7 @@ from app.providers.base import BaseProvider
 
 
 class GeminiProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("gemini")
+    provider_name = "gemini"
 
     async def health(self):
         raise NotImplementedError

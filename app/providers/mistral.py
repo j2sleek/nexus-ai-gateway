@@ -2,9 +2,7 @@ from app.providers.base import BaseProvider
 
 
 class MistralProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("mistral")
+    provider_name = "mistral"
 
     async def health(self):
         raise NotImplementedError

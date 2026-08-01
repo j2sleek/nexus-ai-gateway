@@ -1,10 +1,8 @@
 from app.providers.base import BaseProvider
 
 
-class DashscopeProvider(BaseProvider):
-
-    def __init__(self):
-        super().__init__("dashscope")
+class DashScopeProvider(BaseProvider):
+    provider_name = "dashscope"
 
     async def health(self):
         raise NotImplementedError

@@ -1,28 +1,30 @@
 from __future__ import annotations
-
+from app.models.model_info import ModelInfo
 from abc import ABC, abstractmethod
 from typing import Any
 
 
 class BaseProvider(ABC):
     """
-    Abstract base class for AI providers.
+    Base interface implemented by every AI provider.
     """
 
-    def __init__(self, name: str):
-        self.name = name
+    provider_name: str
+
+    def __init__(self) -> None:
+        self.name = self.provider_name
 
     @abstractmethod
     async def health(self) -> bool:
         """
-        Check whether the provider is reachable.
+        Return True if the provider is reachable.
         """
         raise NotImplementedError
 
     @abstractmethod
-    async def list_models(self) -> list[dict[str, Any]]:
+    async def list_models(self) -> list[ModelInfo]:
         """
-        Return all available models.
+        Return the models exposed by this provider.
         """
         raise NotImplementedError
 
@@ -32,6 +34,6 @@ class BaseProvider(ABC):
         request: dict[str, Any],
     ) -> dict[str, Any]:
         """
-        Execute a chat request.
+        Execute a chat completion request.
         """
         raise NotImplementedError
