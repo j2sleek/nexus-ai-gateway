@@ -1,10 +1,27 @@
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from app.models.requests import GatewayRequest
+from app.models.responses import GatewayResponse
+
+
 class BaseClient(ABC):
+    """
+    Base transport client.
 
-    async def chat(...):
-        ...
+    A client is responsible only for communicating with a provider.
+    Routing decisions are made elsewhere.
+    """
 
-    async def stream(...):
-        ...
+    provider_name: str
 
-    async def embeddings(...):
-        ...
+    @abstractmethod
+    async def execute(
+        self,
+        request: GatewayRequest,
+    ) -> GatewayResponse:
+        """
+        Execute a normalized gateway request against the provider.
+        """
+        raise NotImplementedError
