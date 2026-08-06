@@ -13,7 +13,6 @@ class GeminiProvider(BaseProvider):
     async def list_models(self):
         raise NotImplementedError
 
-
     async def chat(self, request: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
 
