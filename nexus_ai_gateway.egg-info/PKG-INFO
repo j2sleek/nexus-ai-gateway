@@ -1,0 +1,144 @@
+Metadata-Version: 2.4
+Name: nexus-ai-gateway
+Version: 0.1.0
+Summary: Intelligent multi-provider AI gateway with capability-based routing
+Author: Stephen Sampson
+License: MIT
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi>=0.116.0
+Requires-Dist: uvicorn[standard]>=0.35.0
+Requires-Dist: httpx>=0.28.0
+Requires-Dist: pydantic>=2.11.0
+Requires-Dist: pydantic-settings>=2.10.0
+Requires-Dist: python-dotenv>=1.1.0
+Requires-Dist: PyYAML>=6.0.2
+Requires-Dist: litellm>=1.76.0
+Requires-Dist: structlog>=25.4.0
+Requires-Dist: tenacity>=9.1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.4.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=1.1.0; extra == "dev"
+Requires-Dist: ruff>=0.12.0; extra == "dev"
+Requires-Dist: basedpyright>=1.31.0; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: pytest-mock; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Dynamic: license-file
+
+Nexus AI Gateway
+
+«An intelligent, provider-agnostic AI gateway that automatically discovers AI models and routes requests based on capabilities, performance, health, and policy.»
+
+Nexus AI Gateway provides a unified API for AI-powered applications while abstracting away provider-specific implementations. It discovers available models, normalises their capabilities, and intelligently selects the most suitable model for each request.
+
+Features
+
+- Provider-agnostic architecture
+- Automatic model discovery
+- Capability-based routing
+- Anthropic-compatible API
+- OpenAI-compatible API
+- Streaming support
+- Health-aware failover
+- Configurable routing policies
+- Extensible provider framework
+- Production-ready FastAPI foundation
+
+Supported Providers
+
+The gateway is designed to support multiple AI providers through a common abstraction layer.
+
+Current provider integrations include:
+
+- LiteLLM
+- Alibaba DashScope
+- Google Gemini
+- Mistral AI
+- OpenRouter
+- DeepSeek
+- Ollama
+
+Additional providers can be added without modifying the routing engine.
+
+Quick Start
+
+Clone the repository
+
+git clone https://github.com/<your-org>/nexus-ai-gateway.git
+cd nexus-ai-gateway
+
+Create a virtual environment
+
+python -m venv .venv
+
+Activate the environment
+
+Linux/macOS:
+
+source .venv/bin/activate
+
+Install dependencies
+
+pip install -r requirements.txt
+
+Configure environment variables
+
+cp .env.example .env
+
+Update the required provider credentials in ".env".
+
+Run the server
+
+uvicorn app.main:app --reload
+
+The API will be available at:
+
+http://127.0.0.1:8000
+
+Configuration
+
+Provider configuration:
+
+config/providers.yaml
+
+Routing policies:
+
+config/router.yaml
+
+Environment variables:
+
+.env
+
+API Endpoints
+
+Endpoint| Description
+"GET /health"| Health check
+"GET /metrics"| Service metrics
+"GET /v1/models"| Available models
+"POST /v1/messages"| Anthropic-compatible API
+"POST /v1/chat/completions"| OpenAI-compatible API
+
+Documentation
+
+Additional documentation is available in the "docs/" directory:
+
+- Architecture
+- Routing
+- Provider integrations
+- Model discovery
+- Deployment
+- Contributing
+- Benchmarking
+- Roadmap
+
+Contributing
+
+Contributions are welcome.
+
+Please open an issue to discuss significant changes before submitting a pull request.
+
+Licence
+
+Released under the MIT License.

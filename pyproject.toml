@@ -3,9 +3,9 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-router"
+name = "nexus-ai-gateway"
+description = "Intelligent multi-provider AI gateway with capability-based routing"
 version = "0.1.0"
-description = "Intelligent AI router for Claude Code"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -31,13 +31,11 @@ dev = [
   "pytest>=8.4.0",
   "pytest-asyncio>=1.1.0",
   "ruff>=0.12.0",
-  "black>=25.1.0",
-  "mypy>=1.17.0"
+  "basedpyright>=1.31.0",
+  "pytest-cov",
+  "pytest-mock",
+  "pre-commit"
 ]
-
-[tool.black]
-line-length = 100
-target-version = ["py312"]
 
 [tool.ruff]
 line-length = 100
@@ -45,12 +43,20 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = [
-  "E",
-  "F",
-  "I",
-  "UP",
-  "B"
+    "E",
+    "F",
+    "W",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+    "RUF",
 ]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,6 +1,5 @@
 @dataclass(slots=True, frozen=True)
 class GenerationConfig:
-
     temperature: float | None = None
 
     top_p: float | None = None
@@ -15,24 +14,20 @@ class GenerationConfig:
 
     metadata: dict[str, object] = field(default_factory=dict)
 
+
 @dataclass(slots=True, frozen=True)
 class RoutingPreferences:
-
     preferred_provider: str | None = None
 
     preferred_model: str | None = None
 
-    required_capabilities: frozenset[Capability] = field(
-        default_factory=frozenset
-    )
+    required_capabilities: frozenset[Capability] = field(default_factory=frozenset)
 
-    excluded_providers: frozenset[str] = field(
-        default_factory=frozenset
-    )
+    excluded_providers: frozenset[str] = field(default_factory=frozenset)
+
 
 @dataclass(slots=True, frozen=True)
 class GatewayRequest:
-
     task: TaskType
 
     messages: tuple[dict[str, object], ...]
@@ -42,5 +37,3 @@ class GatewayRequest:
     generation: GenerationConfig
 
     metadata: dict[str, object] = field(default_factory=dict)
-
-

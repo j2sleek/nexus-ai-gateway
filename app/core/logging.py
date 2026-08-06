@@ -16,12 +16,7 @@ class ConsoleFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         timestamp = self.formatTime(record, "%H:%M:%S")
-        return (
-            f"{timestamp} "
-            f"[{record.levelname:<8}] "
-            f"{record.name}: "
-            f"{record.getMessage()}"
-        )
+        return f"{timestamp} [{record.levelname:<8}] {record.name}: {record.getMessage()}"
 
 
 def configure_logging() -> None:
@@ -39,11 +34,7 @@ def configure_logging() -> None:
     if settings.environment.lower() == "development":
         handler.setFormatter(ConsoleFormatter())
     else:
-        handler.setFormatter(
-            JsonFormatter(
-                "%(asctime)s %(levelname)s %(name)s %(message)s"
-            )
-        )
+        handler.setFormatter(JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
 
     root.setLevel(settings.log_level.upper())
     root.addHandler(handler)
