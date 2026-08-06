@@ -6,7 +6,7 @@ import yaml
 
 from app.core.registry import ProviderRegistry
 from app.discovery.summary import DiscoverySummary
-from app.models.model_registry import ModelRegistry
+from app.core.model_registry import ModelRegistry
 from app.providers import PROVIDERS
 
 

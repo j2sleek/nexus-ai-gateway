@@ -6,6 +6,9 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.registry import ProviderRegistry
+from app.discovery.manager import DiscoveryManager
+from app.core.model_registry import ModelRegistry
 
 configure_logging()
 
@@ -20,20 +23,34 @@ async def lifespan(app: FastAPI):
 
     logger.info("Starting %s", settings.app_name)
 
-    # TODO:
-    # Initialise logging
-    # Load registry
+    # Initialize components
+    provider_registry = ProviderRegistry()
+    model_registry = ModelRegistry()
+    discovery_manager = DiscoveryManager(
+        provider_registry=provider_registry,
+        model_registry=model_registry,
+        config_path=settings.providers_config,
+    )
+
     # Discover providers
-    # Start scheduler
+    try:
+        summary = await discovery_manager.discover()
+        logger.info("Discovery complete: %s", summary)
+    except Exception as e:
+        logger.exception("Failed to initialize providers: %s", e)
+        raise
+
+    # Store in app state for dependency injection
+    app.state.provider_registry = provider_registry
+    app.state.model_registry = model_registry
 
     yield
 
     logger.info("Stopping %s", settings.app_name)
 
-    # TODO:
-    # Stop scheduler
-    # Flush logs
-    # Save registry
+    # Shutdown
+    provider_registry.clear()
+    model_registry.clear()
 
 
 app = FastAPI(
