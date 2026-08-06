@@ -56,57 +56,91 @@ sequenceDiagram
 ```
 
 ## 5. Shutdown Flow
-1. Scheduler stops all background tasks.
-2. HTTP clients (connection pools) released.
-3. Cache connections closed.
-4. `ProviderRegistry` and `ModelRegistry` cleared.
+```mermaid
+sequenceDiagram
+    participant S as Shutdown
+    participant Sch as Scheduler
+    participant C as ClientPools
+    participant Reg as Registries
 
-## 6. Routing Strategy
-- **Exact Model Routing:** Highest priority; uses ID lookup.
-- **Capability Routing:** Used if exact model is missing or unhealthy; filters models supporting the requested capability.
-- **Fallback Routing:** If preferred model/provider fails, automatically selects the next healthy compatible model.
-- **Future:** Cost and latency-aware routing metrics will be implemented.
+    S->>Sch: Stop Tasks
+    S->>C: Release Connections
+    S->>Reg: Clear Registries
+```
 
-## 7. Registry Design
-- **Indices:** `ProviderRegistry` and `ModelRegistry` maintain indices by `provider`, `capability`, and `modality`.
-- **Thread/Async Safety:** Uses `asyncio.Lock` for all mutations.
-- **Complexity:** $O(1)$ for exact match, $O(N)$ for category lookups.
+## 6. Multi-Provider Routing Strategy
+Routing involves candidate model generation, ranking, and potential fallback:
+1. **Capability filtering:** Identify models meeting requirements.
+2. **Health filtering:** Exclude unhealthy providers/models.
+3. **Priority ranking:** Rank based on provider-defined priority.
+4. **Candidate list:** Ordered list of candidates.
+5. **Execution:** Attempt first candidate.
+6. **Fallback:** If execution fails, automatically attempt next in candidate list.
 
-## 8. Provider Contract (`BaseProvider`)
-Mandatory implementation of:
-- `health()`, `list_models()`
-- `chat()`, `stream_chat()`
-- `embeddings()` (optional)
-- `supports()`, `get_capabilities()`
+## 7. Provider Lifecycle States
+- **REGISTERED:** Initial state.
+- **DISCOVERING:** Loading models.
+- **HEALTHY:** Ready for requests.
+- **DEGRADED:** High latency/error rate.
+- **UNHEALTHY:** Failed health checks.
+- **DISABLED:** Manually toggled off.
 
-## 9. Error Handling Strategy
-- Catch `httpx` and provider-specific exceptions.
-- Normalize into internal `GatewayException` hierarchy.
-- Ensure secrets are sanitized before logging.
+## 8. Model Lifecycle States
+- **DISCOVERED:** Metadata parsed.
+- **AVAILABLE:** Verified ready.
+- **DEGRADED:** Performance issues.
+- **UNAVAILABLE:** Discovery failure.
+- **DEPRECATED:** No longer supported.
 
-## 10. Observability
-- **Logging:** Structured JSON logs via `structlog`.
-- **Metrics:** Prometheus-compatible counters for latency, request count, and failures.
-- **Health:** `/health` endpoint for uptime monitoring.
+## 9. Retry and Failure Policy
+- **Retryable:** Timeouts, 5xx errors, rate limits (exponential backoff).
+- **Non-Retryable:** 4xx auth failures, invalid requests, unsupported capabilities.
+- **Failover:** Move to next provider in candidate list.
 
-## 11. Security
-- API keys retrieved from secure environment via `pydantic-settings`.
-- Sensitive data filtering in logs.
-- Rate limiting to be implemented as FastAPI middleware.
+## 10. Streaming Architecture
+Request -> FastAPI -> RouteResolver -> BaseProvider -> Async Stream -> Response Normalization -> SSE/chunked response -> Client.
+- Supports cancellation handling.
+- Normalizes chunk events.
 
-## 12. Testing Strategy
-- **Unit:** Individual component verification (Registry, Resolver).
-- **Integration:** Provider-specific interface compliance.
-- **End-to-End:** Full request flow validation with mocked upstreams.
-- **Performance:** Load testing of resolver logic.
+## 11. Provider Plugin Architecture
+1. Implement `BaseProvider`.
+2. Add provider module.
+3. Register in `main.py` lifespan.
+4. Discovery updates Registry.
+5. Router includes in candidate list.
 
-## 13. Future Roadmap
-- OpenAI/Anthropic native API compatibility.
-- Circuit breakers for unhealthy providers.
-- Cost-aware routing.
-- Caching layer for model responses.
+## 12. Configuration Philosophy
+- Environment-driven (via `pydantic-settings`).
+- Secrets managed securely.
+- Immutable startup configuration.
+- Runtime state encapsulated in registries.
 
-## 14. Risks
-- **Provider Coupling:** Mitigation: Strict `BaseProvider` enforcement.
-- **Complexity:** Mitigation: Maintain modular registries.
-- **Performance:** Mitigation: Keep registry lookups in-memory/O(1) where possible.
+## 13. API Compatibility Policy
+- Support for OpenAI/Anthropic standards.
+- Strict backward compatibility.
+- Breaking changes require versioned API endpoints.
+
+## 14. Final Architecture Diagram
+```mermaid
+graph TD
+    Client --> API_Layer[API Layer]
+    API_Layer --> Auth[Auth/Validation]
+    Auth --> RouteResolver[Route Resolver]
+    RouteResolver --> ModelRegistry[Model Registry]
+    ModelRegistry --> ProviderRegistry[Provider Registry]
+    ProviderRegistry --> BaseProvider[BaseProvider]
+    BaseProvider --> ConcreteProviders[Concrete Providers]
+    ConcreteProviders --> LiteLLM[LiteLLM Proxy]
+    LiteLLM --> ExternalModels[External Models]
+```
+
+## 15. Summary of Architecture
+- **Responsibilities:** Registry (truth), Discovery (normalization), Provider (interface), Routing (selection).
+- **Dependencies:** Loosely coupled via interfaces (`BaseProvider`).
+- **Failure Handling:** Centralized through normalization and fallback strategies.
+- **Extension:** Pluggable provider architecture.
+
+## 16. Risks
+- **Coupling:** Strict interface enforcement.
+- **Complexity:** Modular registry maintenance.
+- **Performance:** In-memory index lookups.
