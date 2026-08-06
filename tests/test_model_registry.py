@@ -1,6 +1,7 @@
 import pytest
+
 from app.models.model_info import ModelInfo
-from app.models.capability import Capability
+
 
 @pytest.mark.asyncio
 async def test_model_registration(model_registry):
@@ -8,6 +9,7 @@ async def test_model_registration(model_registry):
     await model_registry.register_model(model)
     assert await model_registry.exists("test-model")
     assert await model_registry.get_model("test-model") == model
+
 
 @pytest.mark.asyncio
 async def test_duplicate_registration(model_registry):
