@@ -7,7 +7,6 @@ import yaml
 from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.summary import DiscoverySummary
-from app.providers import PROVIDERS
 
 
 class DiscoveryManager:
@@ -35,19 +34,20 @@ class DiscoveryManager:
         with self.config_path.open("r", encoding="utf-8") as fp:
             config = yaml.safe_load(fp) or {}
 
-        providers = config.get("providers", {})
+        providers_config = config.get("providers", {})
 
-        for name, settings in providers.items():
+        # Registry already contains registered provider instances.
+        for provider in self.provider_registry:
+            settings = providers_config.get(provider.name, {})
             if not settings.get("enabled", False):
                 continue
 
-            provider_cls = PROVIDERS.get(name)
-
-            if provider_cls is None:
-                continue
-
-            self.provider_registry.register(provider_cls())
+            # In a full implementation, perform health checks here.
+            # ...
 
         return DiscoverySummary(
-            providers_loaded=0, providers_healthy=0, providers_failed=0, models_discovered=0
+            providers_loaded=0,
+            providers_healthy=0,
+            providers_failed=0,
+            models_discovered=0,
         )

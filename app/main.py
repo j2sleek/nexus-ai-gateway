@@ -9,6 +9,7 @@ from app.core.logging import configure_logging
 from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.manager import DiscoveryManager
+from app.providers import PROVIDERS
 
 configure_logging()
 
@@ -26,6 +27,11 @@ async def lifespan(app: FastAPI):
     # Initialize components
     provider_registry = ProviderRegistry()
     model_registry = ModelRegistry()
+
+    # Register providers
+    for _name, provider_cls in PROVIDERS.items():
+        await provider_registry.register(provider_cls())
+
     discovery_manager = DiscoveryManager(
         provider_registry=provider_registry,
         model_registry=model_registry,
