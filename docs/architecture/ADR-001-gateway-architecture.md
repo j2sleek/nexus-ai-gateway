@@ -1,55 +1,112 @@
 # ADR-001: Gateway Architecture
 
-## Context
-The Nexus AI Gateway requires a modular, provider-agnostic architecture to support intelligent AI model routing and dynamic discovery.
+## 1. Goals
+The Nexus AI Gateway provides a robust interface for multi-provider AI access:
+- **Provider Agnostic:** Abstract underlying providers via a unified interface.
+- **OpenAI/Anthropic Compatible:** Native interface support for common API standards.
+- **Dynamic Model Discovery:** Automatic normalization of model metadata.
+- **Intelligent Routing:** Deterministic capability-aware selection.
+- **Streaming Support:** First-class handling for real-time model output.
+- **High Availability:** Health-aware selection and failover.
+- **Extensibility:** Simple plugin architecture for new providers.
 
-## Decision
-We have adopted a decoupled, dependency-inversion-based architecture.
+## 2. Non-Goals
+- Implementing underlying model logic or fine-tuning.
+- Complex persistent state management outside of the registry.
+- Acting as the primary Authentication Authority (delegated to middleware).
 
-## Component Diagram
+## 3. Complete Request Flow
 ```mermaid
-graph TD
-    API[API Endpoints] --> Resolver[Route Resolver]
-    Resolver --> Registry[Model Registry]
-    Registry --> Provider[BaseProvider Interface]
-    Provider --> Concrete[Concrete Providers]
-    Discovery[Discovery Manager] --> Registry
+sequenceDiagram
+    participant C as Client
+    participant A as FastAPI/Gateway
+    participant R as RouteResolver
+    participant Reg as ModelRegistry
+    participant P as BaseProvider
+    participant U as Upstream LLM
+
+    C->>A: Request
+    A->>A: Validation/Auth
+    A->>R: Resolve(requested_model, capability)
+    R->>Reg: Get Model Info
+    Reg-->>R: Model Details
+    R-->>A: RoutingResult
+    A->>P: Call(chat/stream)
+    P->>U: Forward Request
+    U-->>P: Upstream Response
+    P-->>A: Normalized Response
+    A-->>C: Response/Stream
 ```
 
-## Dependency Graph
+## 4. Startup Flow
 ```mermaid
-graph LR
-    API --> Routing
-    Routing --> ModelRegistry
-    Discovery --> ProviderRegistry
-    ProviderRegistry --> BaseProvider
-    BaseProvider --> ConcreteProviders
+sequenceDiagram
+    participant S as Startup
+    participant C as Config
+    participant Reg as Registries
+    participant D as Discovery
+    participant Sch as Scheduler
+
+    S->>C: Load Configuration
+    S->>Reg: Init ProviderRegistry & ModelRegistry
+    S->>Reg: Register Providers
+    S->>D: Trigger Discovery
+    D-->>Reg: Sync Model Index
+    S->>Sch: Start Background Scheduler
 ```
 
-## Startup Sequence
-1. FastAPI app initializes `lifespan`.
-2. `ProviderRegistry` and `ModelRegistry` initialized.
-3. Providers registered in `ProviderRegistry`.
-4. `DiscoveryManager` queries registries, runs health checks, populates registries.
+## 5. Shutdown Flow
+1. Scheduler stops all background tasks.
+2. HTTP clients (connection pools) released.
+3. Cache connections closed.
+4. `ProviderRegistry` and `ModelRegistry` cleared.
 
-## Request Flow
-1. API receives request.
-2. `RouteResolver` queried for model/capability.
-3. `RouteResolver` returns `RoutingResult`.
-4. Gateway interacts with `BaseProvider` to execute.
+## 6. Routing Strategy
+- **Exact Model Routing:** Highest priority; uses ID lookup.
+- **Capability Routing:** Used if exact model is missing or unhealthy; filters models supporting the requested capability.
+- **Fallback Routing:** If preferred model/provider fails, automatically selects the next healthy compatible model.
+- **Future:** Cost and latency-aware routing metrics will be implemented.
 
-## Component Responsibilities
-- **Registry:** Single source of truth for providers and models.
-- **Discovery:** Normalizes provider metadata and populates registry.
-- **Provider:** Abstract interface for model interaction.
-- **Routing:** Deterministic selection of provider and model.
+## 7. Registry Design
+- **Indices:** `ProviderRegistry` and `ModelRegistry` maintain indices by `provider`, `capability`, and `modality`.
+- **Thread/Async Safety:** Uses `asyncio.Lock` for all mutations.
+- **Complexity:** $O(1)$ for exact match, $O(N)$ for category lookups.
 
-## Design Principles
-- **Decoupling:** Components interact via interfaces.
-- **Dependency Inversion:** Higher-level modules depend on abstractions.
-- **Extensibility:** New providers are added via `BaseProvider` implementation.
+## 8. Provider Contract (`BaseProvider`)
+Mandatory implementation of:
+- `health()`, `list_models()`
+- `chat()`, `stream_chat()`
+- `embeddings()` (optional)
+- `supports()`, `get_capabilities()`
 
-## Future Provider Integration Guide
-1. Implement `BaseProvider` interface.
-2. Add provider to `app/providers/`.
-3. Register provider in `main.py` lifespan.
+## 9. Error Handling Strategy
+- Catch `httpx` and provider-specific exceptions.
+- Normalize into internal `GatewayException` hierarchy.
+- Ensure secrets are sanitized before logging.
+
+## 10. Observability
+- **Logging:** Structured JSON logs via `structlog`.
+- **Metrics:** Prometheus-compatible counters for latency, request count, and failures.
+- **Health:** `/health` endpoint for uptime monitoring.
+
+## 11. Security
+- API keys retrieved from secure environment via `pydantic-settings`.
+- Sensitive data filtering in logs.
+- Rate limiting to be implemented as FastAPI middleware.
+
+## 12. Testing Strategy
+- **Unit:** Individual component verification (Registry, Resolver).
+- **Integration:** Provider-specific interface compliance.
+- **End-to-End:** Full request flow validation with mocked upstreams.
+- **Performance:** Load testing of resolver logic.
+
+## 13. Future Roadmap
+- OpenAI/Anthropic native API compatibility.
+- Circuit breakers for unhealthy providers.
+- Cost-aware routing.
+- Caching layer for model responses.
+
+## 14. Risks
+- **Provider Coupling:** Mitigation: Strict `BaseProvider` enforcement.
+- **Complexity:** Mitigation: Maintain modular registries.
+- **Performance:** Mitigation: Keep registry lookups in-memory/O(1) where possible.
