@@ -1,17 +1,27 @@
+import logging
 from dataclasses import dataclass
 
+from app.core.exceptions import (
+    CapabilityNotSupported,
+    ModelNotFound,
+    NoHealthyProvider,
+    RoutingFailure,
+)
 from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.models.capability import Capability
+from app.models.model_info import ModelInfo
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class RoutingResult:
     provider: str
     model: str
-    reason: str
-    fallback: bool
     capability_used: Capability | None
+    fallback_used: bool
+    routing_reason: str
 
 
 class RouteResolver:
@@ -28,31 +38,55 @@ class RouteResolver:
         requested_model: str | None = None,
         required_capability: Capability | None = None,
     ) -> RoutingResult:
-        # Exact model routing
+        candidates = await self._generate_candidates(requested_model, required_capability)
+        healthy_candidates = await self._filter_healthy(candidates)
+
+        if not healthy_candidates:
+            raise NoHealthyProvider("No healthy providers available.")
+
+        # Deterministic selection: rank by priority
+        ranked = sorted(healthy_candidates, key=lambda m: m.priority, reverse=True)
+        selected = ranked[0]
+
+        logger.info(
+            "Routing decision",
+            provider=selected.provider,
+            model=selected.id,
+            reason="success",
+            fallback=len(ranked) > 1,
+        )
+
+        return RoutingResult(
+            provider=selected.provider,
+            model=selected.id,
+            capability_used=required_capability,
+            fallback_used=len(ranked) > 1,
+            routing_reason="success",
+        )
+
+    async def _generate_candidates(
+        self, requested_model: str | None, required_capability: Capability | None
+    ) -> list[ModelInfo]:
         if requested_model:
             model = await self.model_registry.get_model(requested_model)
-            if model:
-                return RoutingResult(
-                    provider=model.provider,
-                    model=model.id,
-                    reason="exact_match",
-                    fallback=False,
-                    capability_used=required_capability,
-                )
+            if not model:
+                raise ModelNotFound(f"Model {requested_model} not found.")
+            return [model]
 
-        # Capability routing
         if required_capability:
             models = await self.model_registry.list_by_capability(required_capability)
-            if models:
-                # Simple selection: pick the first available
-                model = models[0]
-                return RoutingResult(
-                    provider=model.provider,
-                    model=model.id,
-                    reason="capability_match",
-                    fallback=False,
-                    capability_used=required_capability,
+            if not models:
+                raise CapabilityNotSupported(
+                    f"No models support capability {required_capability.value}."
                 )
+            return models
 
-        # Fallback
-        raise ValueError("No suitable model found for request")
+        raise RoutingFailure("Must specify model or capability.")
+
+    async def _filter_healthy(self, models: list[ModelInfo]) -> list[ModelInfo]:
+        healthy_models = []
+        for model in models:
+            provider = self.provider_registry.get(model.provider)
+            if provider and await provider.health():
+                healthy_models.append(model)
+        return healthy_models
