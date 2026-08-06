@@ -4,9 +4,9 @@ from pathlib import Path
 
 import yaml
 
+from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.summary import DiscoverySummary
-from app.core.model_registry import ModelRegistry
 from app.providers import PROVIDERS
 
 

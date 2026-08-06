@@ -29,8 +29,21 @@ class ModelInfo:
     # Runtime metadata
     capabilities: frozenset[Capability] = field(default_factory=frozenset)
 
-    # Free-form provider metadata
-    metadata: dict[str, object] = field(default_factory=dict)
+    # Modalities
+    modalities: frozenset[str] = field(default_factory=frozenset)
+
+    # Boolean flags for capabilities
+    supports_streaming: bool = False
+    supports_tools: bool = False
+    supports_vision: bool = False
+    supports_audio: bool = False
+    supports_embeddings: bool = False
+    supports_reasoning: bool = False
+
+    # Status & Priority
+    status: str = "active"
+    priority: int = 0
+    tags: frozenset[str] = field(default_factory=frozenset)
 
     def has(self, capability: Capability) -> bool:
         return capability in self.capabilities
