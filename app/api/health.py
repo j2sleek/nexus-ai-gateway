@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 
@@ -6,7 +6,7 @@ from app.core.config import settings
 
 router = APIRouter(tags=["Health"])
 
-START_TIME = datetime.now(timezone.utc)
+START_TIME = datetime.now(UTC)
 
 
 @router.get("/health")
@@ -19,7 +19,7 @@ async def health():
         "application": settings.app_name,
         "environment": settings.environment,
         "version": "0.1.0",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 

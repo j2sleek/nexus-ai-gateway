@@ -1,16 +1,30 @@
+from collections.abc import Iterable
+
+from app.models.capability import Capability
+from app.models.model_info import ModelInfo
+
+
 class ModelRegistry:
-    def register(model: ModelInfo)
+    def register(self, model: ModelInfo) -> None:
+        pass
 
-    def register_many(models: Iterable[ModelInfo])
+    def register_many(self, models: Iterable[ModelInfo]) -> None:
+        pass
 
-    def get(model_id: str)
+    def get(self, model_id: str) -> ModelInfo | None:
+        pass
 
-    def all()
+    def all(self) -> list[ModelInfo]:
+        pass
 
-    def providers()
+    def providers(self) -> list[str]:
+        pass
 
-    def by_provider(provider: str)
+    def by_provider(self, provider: str) -> list[ModelInfo]:
+        pass
 
-    def by_capability(capability: Capability)
+    def by_capability(self, capability: Capability) -> list[ModelInfo]:
+        pass
 
-    def clear()
+    def clear(self) -> None:
+        pass

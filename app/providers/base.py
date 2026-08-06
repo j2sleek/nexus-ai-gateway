@@ -1,7 +1,9 @@
 from __future__ import annotations
-from app.models.model_info import ModelInfo
+
 from abc import ABC, abstractmethod
 from typing import Any
+
+from app.models.model_info import ModelInfo
 
 
 class BaseProvider(ABC):

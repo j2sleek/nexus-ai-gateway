@@ -1,3 +1,9 @@
+from dataclasses import dataclass, field
+
+from app.models.capability import Capability
+from app.models.task import TaskType
+
+
 @dataclass(slots=True, frozen=True)
 class GenerationConfig:
     temperature: float | None = None

@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from typing import Any
+
+
 @dataclass(slots=True, frozen=True)
 class UsageInfo:
     input_tokens: int = 0
@@ -29,11 +33,11 @@ class ModelSelection:
     fallback: bool = False
 
 
-content: str
-
-tool_calls: tuple[...]
-
-finish_reason: str
+@dataclass(slots=True, frozen=True)
+class ResponseContent:
+    content: str
+    tool_calls: tuple[Any, ...]
+    finish_reason: str
 
 
 @dataclass(slots=True, frozen=True)

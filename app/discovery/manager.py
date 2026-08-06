@@ -5,8 +5,10 @@ from pathlib import Path
 import yaml
 
 from app.core.registry import ProviderRegistry
+from app.discovery.summary import DiscoverySummary
+from app.models.model_registry import ModelRegistry
 from app.providers import PROVIDERS
-from app.models import ModelRegistry
+
 
 class DiscoveryManager:
     """
@@ -21,15 +23,15 @@ class DiscoveryManager:
         model_registry: ModelRegistry,
         config_path: str | Path = "config/providers.yaml",
     ) -> None:
-        self.registry = registry
+        self.provider_registry = provider_registry
+        self.model_registry = model_registry
         self.config_path = Path(config_path)
 
     async def discover(self) -> DiscoverySummary:
-    """
-    Load providers, perform health checks,
-    discover models and populate the registry.
-    """
-
+        """
+        Load providers, perform health checks,
+        discover models and populate the registry.
+        """
         with self.config_path.open("r", encoding="utf-8") as fp:
             config = yaml.safe_load(fp) or {}
 
@@ -44,6 +46,8 @@ class DiscoveryManager:
             if provider_cls is None:
                 continue
 
-            self.registry.register(provider_cls())
+            self.provider_registry.register(provider_cls())
 
-        return self.registry
+        return DiscoverySummary(
+            providers_loaded=0, providers_healthy=0, providers_failed=0, models_discovered=0
+        )

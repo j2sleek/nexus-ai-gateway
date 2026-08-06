@@ -4,7 +4,6 @@ import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
 CONFIG_DIR = ROOT_DIR / "config"
 
@@ -33,11 +32,11 @@ class Settings(BaseSettings):
     )
 
     def load_router(self) -> dict:
-        with open(self.router_config, "r", encoding="utf-8") as f:
+        with open(self.router_config, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def load_providers(self) -> dict:
-        with open(self.providers_config, "r", encoding="utf-8") as f:
+        with open(self.providers_config, encoding="utf-8") as f:
             return yaml.safe_load(f)
 
 
