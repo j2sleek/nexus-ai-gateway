@@ -10,7 +10,7 @@ from app.core.logging import configure_logging
 from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.manager import DiscoveryManager
-from app.providers import PROVIDERS
+from app.providers import get_providers
 from app.routing.engine import RouteResolver
 
 configure_logging()
@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     model_registry = ModelRegistry()
 
     # Register providers
-    for _name, provider_cls in PROVIDERS.items():
+    for provider_cls in get_providers():
         await provider_registry.register(provider_cls())
 
     discovery_manager = DiscoveryManager(
