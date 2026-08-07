@@ -1,15 +1,10 @@
-"""
-Base streaming normalizer interface.
-
-Responsibilities:
-- Transform provider-agnostic chunks into normalized events
-- Handle cancellation and errors
-- Provide streaming context (provider, model, etc.)
-"""
-
+import asyncio
+import time
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
+
+from .metrics import record_stream_event
 
 
 class BaseStreamNormalizer(ABC):
@@ -19,24 +14,33 @@ class BaseStreamNormalizer(ABC):
         self.provider_name = provider_name
         self.model_name = model_name
 
+    async def normalize_stream_with_lifecycle(
+        self,
+        provider_stream: AsyncIterator[Any],
+        request_data: dict[str, Any],
+    ) -> AsyncGenerator[str, None]:
+        start_time = time.time()
+        record_stream_event("stream_started", self.provider_name, self.model_name)
+
+        try:
+            async for event in self.normalize_stream(provider_stream, request_data):
+                yield event
+            duration = time.time() - start_time
+            record_stream_event("stream_completed", self.provider_name, self.model_name, duration)
+        except asyncio.CancelledError:
+            duration = time.time() - start_time
+            record_stream_event("stream_cancelled", self.provider_name, self.model_name, duration)
+            raise
+        except Exception as e:
+            duration = time.time() - start_time
+            record_stream_event("stream_failed", self.provider_name, self.model_name, duration)
+            # Normalize error termination event
+            yield f'data: {{"error": "{e!s}"}}\n\n'
+            raise
+
     @abstractmethod
     async def normalize_stream(
         self,
         provider_stream: AsyncIterator[Any],
         request_data: dict[str, Any],
-    ) -> AsyncGenerator[Any, None]:
-        """
-        Normalize provider stream into API-specific events.
-
-        Args:
-            provider_stream: Async iterator of raw provider chunks
-            request_data: Original request body for context
-
-        Returns:
-            AsyncGenerator yielding normalized events
-        """
-        ...
-
-    def _check_cancellation(self, request: Any) -> bool:
-        """Check if client disconnected."""
-        return request.is_disconnected()
+    ) -> AsyncGenerator[str, None]: ...

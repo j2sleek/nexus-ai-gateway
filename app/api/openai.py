@@ -31,7 +31,7 @@ async def chat_completions(request: Request, body: ChatCompletionRequest):
             normalizer = OpenAIStreamNormalizer(provider.provider_name, body.model or "default")
             stream = await provider.stream_chat(body.model_dump())
             return StreamingResponse(
-                normalizer.normalize_stream(stream, body.model_dump()),
+                normalizer.normalize_stream_with_lifecycle(stream, body.model_dump()),
                 media_type="text/event-stream",
             )
 

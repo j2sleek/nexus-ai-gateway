@@ -28,7 +28,8 @@ async def messages(request: Request, body: AnthropicRequest):
             normalizer = AnthropicStreamNormalizer(provider.provider_name, body.model)
             stream = await provider.stream_chat(openai_payload)
             return StreamingResponse(
-                normalizer.normalize_stream(stream, openai_payload), media_type="text/event-stream"
+                normalizer.normalize_stream_with_lifecycle(stream, openai_payload),
+                media_type="text/event-stream",
             )
 
         # Synchronous path
