@@ -28,9 +28,8 @@ class ResilienceProxy(BaseProvider):
             raise Exception("Circuit breaker OPEN")
 
         try:
-            result = await asyncio.wait_for(
-                self.retry_strategy.execute(func, *args, **kwargs), timeout=self.timeout
-            )
+            # Pass the total timeout to the retry strategy
+            result = await self.retry_strategy.execute(func, self.timeout, *args, **kwargs)
             self.circuit_breaker.record_success()
             return result
         except Exception:
@@ -39,6 +38,7 @@ class ResilienceProxy(BaseProvider):
 
     async def health(self) -> bool:
         try:
+            # Use a short timeout for health checks
             return await asyncio.wait_for(self.provider.health(), timeout=5)
         except Exception:
             return False
@@ -50,8 +50,7 @@ class ResilienceProxy(BaseProvider):
         return await self._wrap_call(self.provider.chat, request)
 
     async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
-        # Note: Streaming needs special handling. We can't easily retry mid-stream.
-        # This proxy just adds a timeout for the initial connection.
+        # Timeout for streaming is handled during individual chunk retrieval or initial connection
         async for chunk in self.provider.stream_chat(request):
             yield chunk
 

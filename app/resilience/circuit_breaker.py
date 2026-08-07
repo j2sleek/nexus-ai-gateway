@@ -8,11 +8,25 @@ class CircuitState(Enum):
     HALF_OPEN = "HALF_OPEN"
 
 
+class Clock:
+    """Injectable clock for deterministic tests."""
+
+    def time(self) -> float:
+        return time.time()
+
+
 class CircuitBreaker:
-    def __init__(self, threshold: int = 5, recovery_timeout: int = 30, success_threshold: int = 3):
+    def __init__(
+        self,
+        threshold: int = 5,
+        recovery_timeout: int = 30,
+        success_threshold: int = 3,
+        clock: Clock | None = None,
+    ):
         self.threshold = threshold
         self.recovery_timeout = recovery_timeout
         self.success_threshold = success_threshold
+        self.clock = clock or Clock()
 
         self.state = CircuitState.CLOSED
         self.failures = 0
@@ -23,7 +37,7 @@ class CircuitBreaker:
         self.failures += 1
         if self.failures >= self.threshold:
             self.state = CircuitState.OPEN
-            self.last_failure_time = time.time()
+            self.last_failure_time = self.clock.time()
             self.successes = 0
 
     def record_success(self):
@@ -40,7 +54,7 @@ class CircuitBreaker:
             return True
 
         if self.state == CircuitState.OPEN:
-            if time.time() - (self.last_failure_time or 0) > self.recovery_timeout:
+            if self.clock.time() - (self.last_failure_time or 0) > self.recovery_timeout:
                 self.state = CircuitState.HALF_OPEN
                 return True
             return False

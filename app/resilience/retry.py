@@ -28,23 +28,43 @@ class RetryStrategy:
             for keyword in ["connection", "timeout", "502", "503", "504", "rate limit", "temporary"]
         )
 
-    def calculate_delay(self, attempt: int) -> float:
+    def calculate_delay(self, attempt: int, remaining_time: float) -> float:
+        # Calculate exponential backoff with jitter
         delay = self.base_delay * (2 ** (attempt - 1))
         jitter = random.uniform(0, delay * 0.1)
-        return min(delay + jitter, self.max_delay)
+        calculated_delay = delay + jitter
+        # Never exceed remaining time budget or max_delay
+        return min(calculated_delay, remaining_time, self.max_delay)
 
-    async def execute(self, func: Callable[[], T], *args: Any, **kwargs: Any) -> T:
+    async def execute(self, func: Callable[[], T], timeout: float, *args: Any, **kwargs: Any) -> T:
         last_error: Exception | None = None
+        start_time = asyncio.get_event_loop().time()
+
         for attempt in range(1, self.max_attempts + 1):
+            remaining_time = timeout - (asyncio.get_event_loop().time() - start_time)
+            if remaining_time <= 0:
+                raise TimeoutError(f"Total timeout of {timeout}s exceeded")
+
             try:
-                return await func(*args, **kwargs)
+                # Use wait_for with the remaining time budget
+                return await asyncio.wait_for(func(*args, **kwargs), timeout=remaining_time)
+            except TimeoutError:
+                # If we timeout on an individual attempt, check if we have retries left
+                if attempt < self.max_attempts:
+                    # Calculate delay based on remaining time
+                    delay = self.calculate_delay(attempt, remaining_time)
+                    if delay > 0:
+                        await asyncio.sleep(delay)
+                    continue
+                raise
             except Exception as e:
                 last_error = e
                 if not self.is_retryable(e):
                     raise
                 if attempt < self.max_attempts:
-                    delay = self.calculate_delay(attempt)
-                    await asyncio.sleep(delay)
+                    delay = self.calculate_delay(attempt, remaining_time)
+                    if delay > 0:
+                        await asyncio.sleep(delay)
                 else:
                     raise RetryExhausted(f"Exhausted {self.max_attempts} attempts") from e
         raise last_error
