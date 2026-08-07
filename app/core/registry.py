@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
+from app.core.config import settings
 from app.providers.base import BaseProvider
+from app.resilience.proxy import ResilienceProxy
 
 
 class ProviderRegistry:
@@ -15,6 +17,8 @@ class ProviderRegistry:
 
     def __init__(self) -> None:
         self._providers: dict[str, BaseProvider] = {}
+        self._router_config = settings.load_router()
+        self._resilience_config = self._router_config.get("policies", {}).get("circuit_breaker", {})
 
     async def register(self, provider: BaseProvider) -> None:
         """Register a provider instance."""
@@ -25,8 +29,11 @@ class ProviderRegistry:
         self._providers.pop(name, None)
 
     def get(self, name: str) -> BaseProvider | None:
-        """Retrieve a provider by name."""
-        return self._providers.get(name)
+        """Retrieve a provider by name, wrapped in resilience proxy."""
+        provider = self._providers.get(name)
+        if provider:
+            return ResilienceProxy(provider, self._resilience_config)
+        return None
 
     def exists(self, name: str) -> bool:
         """Check if a provider exists."""
