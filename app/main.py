@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.openai import router as openai_router
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
@@ -10,6 +11,7 @@ from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.manager import DiscoveryManager
 from app.providers import PROVIDERS
+from app.routing.engine import RouteResolver
 
 configure_logging()
 
@@ -49,6 +51,7 @@ async def lifespan(app: FastAPI):
     # Store in app state for dependency injection
     app.state.provider_registry = provider_registry
     app.state.model_registry = model_registry
+    app.state.route_resolver = RouteResolver(provider_registry, model_registry)
 
     yield
 
@@ -69,3 +72,4 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+app.include_router(openai_router)
