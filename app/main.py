@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.anthropic import router as anthropic_router
 from app.api.openai import router as openai_router
 from app.api.router import api_router
 from app.core.config import settings
@@ -58,8 +59,8 @@ async def lifespan(app: FastAPI):
     logger.info("Stopping %s", settings.app_name)
 
     # Shutdown
-    provider_registry.clear()
-    model_registry.clear()
+    await provider_registry.clear()
+    await model_registry.clear()
 
 
 app = FastAPI(
@@ -73,3 +74,4 @@ app = FastAPI(
 
 app.include_router(api_router)
 app.include_router(openai_router)
+app.include_router(anthropic_router)

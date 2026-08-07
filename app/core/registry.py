@@ -16,7 +16,7 @@ class ProviderRegistry:
     def __init__(self) -> None:
         self._providers: dict[str, BaseProvider] = {}
 
-    def register(self, provider: BaseProvider) -> None:
+    async def register(self, provider: BaseProvider) -> None:
         """Register a provider instance."""
         self._providers[provider.name] = provider
 
