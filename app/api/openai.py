@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from app.core.exceptions import RoutingError
 from app.models.openai import ChatCompletionRequest
+from app.streaming.openai import OpenAIStreamNormalizer
 
 router = APIRouter(prefix="/v1")
 
@@ -24,11 +26,19 @@ async def chat_completions(request: Request, body: ChatCompletionRequest):
         routing_result = await resolver.resolve(requested_model=body.model)
         provider = request.app.state.provider_registry.get(routing_result.provider)
 
-        # Call provider (assuming OpenAI-compatible request format)
-        response = await provider.chat(body.model_dump())
+        if body.stream:
+            # Streaming path
+            normalizer = OpenAIStreamNormalizer(provider.provider_name, body.model or "default")
+            stream = await provider.stream_chat(body.model_dump())
+            return StreamingResponse(
+                normalizer.normalize_stream(stream, body.model_dump()),
+                media_type="text/event-stream",
+            )
 
+        # Synchronous path
+        response = await provider.chat(body.model_dump())
         return response
     except RoutingError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}") from e

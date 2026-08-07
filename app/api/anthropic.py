@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from app.core.exceptions import RoutingError
 from app.models.anthropic import AnthropicRequest, AnthropicResponse
+from app.streaming.anthropic import AnthropicStreamNormalizer
 
 router = APIRouter(prefix="/v1/anthropic")
 
@@ -21,6 +23,15 @@ async def messages(request: Request, body: AnthropicRequest):
             "messages": [{"role": m.role, "content": m.content} for m in body.messages],
         }
 
+        if body.stream:
+            # Streaming path
+            normalizer = AnthropicStreamNormalizer(provider.provider_name, body.model)
+            stream = await provider.stream_chat(openai_payload)
+            return StreamingResponse(
+                normalizer.normalize_stream(stream, openai_payload), media_type="text/event-stream"
+            )
+
+        # Synchronous path
         raw_response = await provider.chat(openai_payload)
 
         # Normalize response
@@ -33,4 +44,4 @@ async def messages(request: Request, body: AnthropicRequest):
     except RoutingError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}") from e

@@ -16,6 +16,7 @@ class AnthropicRequest(BaseModel):
     temperature: float | None = 1.0
     stop_sequences: list[str] | None = None
     metadata: dict[str, Any] | None = None
+    stream: bool | None = False
 
 
 class AnthropicResponse(BaseModel):
