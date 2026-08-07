@@ -18,8 +18,10 @@ def model_registry():
 
 
 @pytest.fixture
-def mock_provider():
-    return MockProvider("mock-provider")
+def mock_provider(mocker):
+    provider = MockProvider("mock-provider")
+    mocker.patch.object(provider, "health", return_value=True)
+    return provider
 
 
 @pytest.fixture
