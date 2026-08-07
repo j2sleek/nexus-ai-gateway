@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app.core.exceptions import RoutingError
 from app.models.anthropic import AnthropicRequest, AnthropicResponse
 
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="/v1/anthropic")
 
 
 @router.post("/messages", response_model=AnthropicResponse)

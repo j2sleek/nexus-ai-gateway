@@ -40,7 +40,7 @@ class ProviderRegistry:
         """Return provider names."""
         return sorted(self._providers.keys())
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Remove every provider."""
         self._providers.clear()
 
