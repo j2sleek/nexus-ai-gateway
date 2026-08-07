@@ -1,42 +1,14 @@
-from __future__ import annotations
-
-import logging
-import logging.config
-import sys
-
-from pythonjsonlogger.json import JsonFormatter
-
-from app.core.config import settings
+import structlog
 
 
-class ConsoleFormatter(logging.Formatter):
-    """
-    Human-readable formatter for development.
-    """
-
-    def format(self, record: logging.LogRecord) -> str:
-        timestamp = self.formatTime(record, "%H:%M:%S")
-        return f"{timestamp} [{record.levelname:<8}] {record.name}: {record.getMessage()}"
-
-
-def configure_logging() -> None:
-    """
-    Configure application logging.
-    """
-
-    root = logging.getLogger()
-
-    if root.handlers:
-        return
-
-    handler = logging.StreamHandler(sys.stdout)
-
-    if settings.environment.lower() == "development":
-        handler.setFormatter(ConsoleFormatter())
-    else:
-        handler.setFormatter(JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
-
-    root.setLevel(settings.log_level.upper())
-    root.addHandler(handler)
-
-    logging.getLogger("uvicorn.access").handlers = []
+def configure_logging():
+    structlog.configure(
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(),
+        wrapper_class=structlog.BoundLogger,
+        cache_logger_on_first_use=True,
+    )

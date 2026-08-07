@@ -1,43 +1,18 @@
-from datetime import UTC, datetime
+from fastapi import APIRouter, Request, Response, status
 
-from fastapi import APIRouter
-
-from app.core.config import settings
+from app.discovery.manager import DiscoveryManager
 
 router = APIRouter(tags=["Health"])
-
-START_TIME = datetime.now(UTC)
 
 
 @router.get("/health")
 async def health():
-    """
-    Overall application health.
-    """
-    return {
-        "status": "healthy",
-        "application": settings.app_name,
-        "environment": settings.environment,
-        "version": "0.1.0",
-        "timestamp": datetime.now(UTC).isoformat(),
-    }
-
-
-@router.get("/live")
-async def live():
-    """
-    Liveness probe.
-    """
-    return {
-        "status": "alive",
-    }
+    return {"status": "ok"}
 
 
 @router.get("/ready")
-async def ready():
-    """
-    Readiness probe.
-    """
-    return {
-        "status": "ready",
-    }
+async def ready(request: Request):
+    discovery_manager: DiscoveryManager = request.app.state.discovery_manager
+    if await discovery_manager.is_ready():
+        return {"status": "ready"}
+    return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)

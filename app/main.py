@@ -4,13 +4,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.anthropic import router as anthropic_router
+from app.api.health import router as health_router
 from app.api.openai import router as openai_router
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.metrics import get_metrics
 from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.manager import DiscoveryManager
+from app.middleware.request_id import RequestIDMiddleware
 from app.providers import get_providers
 from app.routing.engine import RouteResolver
 
@@ -53,6 +56,7 @@ async def lifespan(app: FastAPI):
     app.state.provider_registry = provider_registry
     app.state.model_registry = model_registry
     app.state.route_resolver = RouteResolver(provider_registry, model_registry)
+    app.state.discovery_manager = discovery_manager
 
     yield
 
@@ -76,9 +80,19 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Add middleware
+    app.add_middleware(RequestIDMiddleware)
+
+    # Add routes
+    app.include_router(health_router)
     app.include_router(api_router)
     app.include_router(openai_router)
     app.include_router(anthropic_router)
+
+    # Add metrics endpoint
+    @app.get("/metrics")
+    async def metrics():
+        return get_metrics()
 
     return app
 
