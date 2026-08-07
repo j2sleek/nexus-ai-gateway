@@ -22,8 +22,8 @@ async def test_app():
         )
         yield app
         # Cleanup
-        app.state.provider_registry.clear()
-        app.state.model_registry.clear()
+        await app.state.provider_registry.clear()
+        await app.state.model_registry.clear()
 
 
 @pytest.mark.asyncio
@@ -31,7 +31,11 @@ async def test_list_models_compatibility(test_app):
     model = ModelInfo(id="gpt-4", provider="litellm", display_name="GPT-4")
     await app.state.model_registry.register_model(model)
 
-    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=test_app),
+        base_url="http://test",
+        headers={"X-API-Key": "test-key-12345"},
+    ) as ac:
         response = await ac.get("/v1/models")
 
     assert response.status_code == 200
@@ -51,7 +55,11 @@ async def test_chat_completion_unknown_model(test_app, mocker):
 
     payload = {"model": "non-existent", "messages": [{"role": "user", "content": "Hello"}]}
 
-    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=test_app),
+        base_url="http://test",
+        headers={"X-API-Key": "test-key-12345"},
+    ) as ac:
         response = await ac.post("/v1/chat/completions", json=payload)
 
     assert response.status_code == 404

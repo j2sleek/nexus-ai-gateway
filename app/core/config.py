@@ -22,6 +22,9 @@ class Settings(BaseSettings):
 
     log_level: str = Field(default="INFO")
 
+    ROOT_DIR: Path = ROOT_DIR
+    CONFIG_DIR: Path = CONFIG_DIR
+
     providers_config: Path = CONFIG_DIR / "providers.yaml"
     router_config: Path = CONFIG_DIR / "router.yaml"
 

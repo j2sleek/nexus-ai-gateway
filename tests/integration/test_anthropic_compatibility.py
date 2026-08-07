@@ -37,7 +37,9 @@ async def test_anthropic_messages_compatibility(app_with_provider, model_registr
     }
 
     async with AsyncClient(
-        transport=ASGITransport(app=app_with_provider), base_url="http://test"
+        transport=ASGITransport(app=app_with_provider),
+        base_url="http://test",
+        headers={"X-API-Key": "test-key-12345"},
     ) as ac:
         response = await ac.post("/v1/anthropic/messages", json=payload)
 

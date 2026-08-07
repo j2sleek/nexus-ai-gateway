@@ -7,5 +7,5 @@ def record_stream_event(event: str, provider: str, model: str, duration: float |
     # This is a stub for real metrics implementation (e.g., Prometheus)
     log_data = {"event": event, "provider": provider, "model": model}
     if duration is not None:
-        log_data["duration"] = round(duration, 3)
+        log_data["duration"] = str(round(duration, 3))
     logger.info(f"Stream metrics: {log_data}")

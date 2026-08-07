@@ -1,0 +1,100 @@
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api.anthropic import router as anthropic_router
+from app.api.health import router as health_router
+from app.api.openai import router as openai_router
+from app.api.router import api_router
+from app.core.config import settings
+from app.core.logging import configure_logging
+from app.core.metrics import get_metrics
+from app.core.model_registry import ModelRegistry
+from app.core.registry import ProviderRegistry
+from app.discovery.manager import DiscoveryManager
+from app.middleware.request_id import RequestIDMiddleware
+from app.providers import get_providers
+from app.routing.engine import RouteResolver
+
+configure_logging()
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application startup/shutdown lifecycle.
+    """
+
+    logger.info("Starting %s", settings.app_name)
+
+    # Initialize components
+    provider_registry = ProviderRegistry()
+    model_registry = ModelRegistry()
+
+    # Register providers
+    for provider_cls in get_providers():
+        await provider_registry.register(provider_cls())
+
+    discovery_manager = DiscoveryManager(
+        provider_registry=provider_registry,
+        model_registry=model_registry,
+        config_path=settings.providers_config,
+    )
+
+    # Discover providers
+    try:
+        summary = await discovery_manager.discover()
+        logger.info("Discovery complete: %s", summary)
+    except Exception as e:
+        logger.exception("Failed to initialize providers: %s", e)
+        raise
+
+    # Store in app state for dependency injection
+    app.state.provider_registry = provider_registry
+    app.state.model_registry = model_registry
+    app.state.route_resolver = RouteResolver(provider_registry, model_registry)
+    app.state.discovery_manager = discovery_manager
+
+    yield
+
+    logger.info("Stopping %s", settings.app_name)
+
+    # Shutdown
+    await provider_registry.clear()
+    await model_registry.clear()
+
+
+def create_app() -> FastAPI:
+    """
+    Application factory to create and configure the FastAPI instance.
+    """
+    app = FastAPI(
+        title=settings.app_name,
+        version="0.1.0",
+        description=(
+            "Intelligent AI Gateway with dynamic provider discovery and capability-based routing."
+        ),
+        lifespan=lifespan,
+    )
+
+    # Add middleware
+    app.add_middleware(RequestIDMiddleware)
+
+    # Add routes
+    app.include_router(health_router)
+    app.include_router(api_router)
+    app.include_router(openai_router)
+    app.include_router(anthropic_router)
+
+    # Add metrics endpoint
+    @app.get("/metrics")
+    async def metrics():
+        return get_metrics()
+
+    return app
+
+
+app = create_app()
