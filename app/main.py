@@ -63,15 +63,24 @@ async def lifespan(app: FastAPI):
     await model_registry.clear()
 
 
-app = FastAPI(
-    title=settings.app_name,
-    version="0.1.0",
-    description=(
-        "Intelligent AI Gateway with dynamic provider discovery and capability-based routing."
-    ),
-    lifespan=lifespan,
-)
+def create_app() -> FastAPI:
+    """
+    Application factory to create and configure the FastAPI instance.
+    """
+    app = FastAPI(
+        title=settings.app_name,
+        version="0.1.0",
+        description=(
+            "Intelligent AI Gateway with dynamic provider discovery and capability-based routing."
+        ),
+        lifespan=lifespan,
+    )
 
-app.include_router(api_router)
-app.include_router(openai_router)
-app.include_router(anthropic_router)
+    app.include_router(api_router)
+    app.include_router(openai_router)
+    app.include_router(anthropic_router)
+
+    return app
+
+
+app = create_app()

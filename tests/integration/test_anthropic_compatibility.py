@@ -1,13 +1,15 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app, lifespan
+from app.main import create_app, lifespan
 from app.models.model_info import ModelInfo
+from app.routing.engine import RouteResolver
 from tests.fixtures.mock_provider import MockProvider
 
 
 @pytest.fixture
 async def app_with_provider(provider_registry, model_registry):
+    app = create_app()
     async with lifespan(app):
         provider = MockProvider("litellm")
         provider.is_healthy = True
@@ -15,6 +17,7 @@ async def app_with_provider(provider_registry, model_registry):
 
         app.state.provider_registry = provider_registry
         app.state.model_registry = model_registry
+        app.state.route_resolver = RouteResolver(provider_registry, model_registry)
 
         yield app
 

@@ -10,7 +10,7 @@ async def test_exact_model_routing(
 ):
     model = ModelInfo(id="gpt-4", provider="mock-provider", display_name="GPT-4")
     await model_registry.register_model(model)
-    provider_registry.register(mock_provider)
+    await provider_registry.register(mock_provider)
 
     result = await route_resolver.resolve(requested_model="gpt-4")
     assert result.model == "gpt-4"
@@ -27,7 +27,7 @@ async def test_capability_routing(model_registry, provider_registry, route_resol
         capabilities=frozenset([Capability.CHAT]),
     )
     await model_registry.register_model(model)
-    provider_registry.register(mock_provider)
+    await provider_registry.register(mock_provider)
 
     result = await route_resolver.resolve(required_capability=Capability.CHAT)
     assert result.model == "model-a"

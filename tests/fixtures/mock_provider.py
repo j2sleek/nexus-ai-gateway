@@ -20,7 +20,19 @@ class MockProvider(BaseProvider):
         return []
 
     async def chat(self, request: dict[str, Any]) -> dict[str, Any]:
-        return {"content": "mock response"}
+        return {
+            "id": "chatcmpl-123",
+            "model": request.get("model", "gpt-4"),
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "This is a mock response from the provider.",
+                    }
+                }
+            ],
+            "usage": {"input_tokens": 10, "output_tokens": 20},
+        }
 
     async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
         yield {"content": "chunk"}
