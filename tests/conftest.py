@@ -4,6 +4,7 @@ from app.core.model_registry import ModelRegistry
 from app.core.registry import ProviderRegistry
 from app.discovery.manager import DiscoveryManager
 from app.routing.engine import RouteResolver
+from tests.fixtures.mock_provider import MockProvider
 
 
 @pytest.fixture
@@ -14,6 +15,11 @@ def provider_registry():
 @pytest.fixture
 def model_registry():
     return ModelRegistry()
+
+
+@pytest.fixture
+def mock_provider():
+    return MockProvider("mock-provider")
 
 
 @pytest.fixture
