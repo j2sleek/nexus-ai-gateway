@@ -1,8 +1,11 @@
 import secrets
 
+import yaml
 from fastapi import Depends, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader, HTTPBearer
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
+
+from app.core.config import settings
 
 from .models import APIKey, Permission
 
@@ -12,7 +15,21 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_api_keys() -> dict[str, APIKey]:
-    return {}
+    auth_config_path = settings.ROOT_DIR / "config" / "auth.yaml"
+    with open(auth_config_path, encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    keys = {}
+    for key_data in config.get("keys", []):
+        key = APIKey(
+            id=key_data["id"],
+            key=key_data["key"],
+            description=key_data.get("description", ""),
+            enabled=key_data.get("enabled", True),
+            permissions=frozenset(key_data.get("permissions", [])),
+        )
+        keys[key.id] = key
+    return keys
 
 
 async def _get_bearer(

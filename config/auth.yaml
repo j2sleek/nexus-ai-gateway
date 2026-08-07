@@ -1,0 +1,37 @@
+# API Key Configuration
+# Each key should have a unique ID, the key value, and associated permissions
+keys:
+  - id: "default-key"
+    key: "test-key-12345"
+    description: "Default test key"
+    enabled: true
+    permissions:
+      - chat
+      - embeddings
+      - vision
+      - image_generation
+      - speech
+
+  - id: "admin-key"
+    key: "admin-key-67890"
+    description: "Administrator key"
+    enabled: true
+    permissions:
+      - chat
+      - embeddings
+      - vision
+      - image_generation
+      - speech
+      - admin
+
+  - id: "disabled-key"
+    key: "disabled-key-abcde"
+    description: "Disabled test key"
+    enabled: false
+    permissions:
+      - chat
+
+public_endpoints:
+  - "/health"
+
+metrics_public: false

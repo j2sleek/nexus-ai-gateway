@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from app.auth.deps import check_permission
+from app.auth.models import APIKey, Permission
 from app.core.exceptions import RoutingError
 from app.models.anthropic import AnthropicRequest, AnthropicResponse
 from app.streaming.anthropic import AnthropicStreamNormalizer
@@ -9,7 +11,11 @@ router = APIRouter(prefix="/v1/anthropic")
 
 
 @router.post("/messages", response_model=AnthropicResponse)
-async def messages(request: Request, body: AnthropicRequest):
+async def messages(
+    request: Request,
+    body: AnthropicRequest,
+    principal: APIKey = Depends(check_permission(Permission.CHAT)),  # noqa: B008,
+):
     resolver = request.app.state.route_resolver
 
     try:

@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from app.auth.deps import check_permission
+from app.auth.models import APIKey, Permission
 from app.core.exceptions import RoutingError
 from app.models.openai import ChatCompletionRequest
 from app.streaming.openai import OpenAIStreamNormalizer
@@ -9,7 +11,10 @@ router = APIRouter(prefix="/v1")
 
 
 @router.get("/models")
-async def list_models(request: Request):
+async def list_models(
+    request: Request,
+    principal: APIKey = Depends(check_permission(Permission.CHAT)),  # noqa: B008
+):
     registry = request.app.state.model_registry
     models = await registry.list_models()
     return {
@@ -19,7 +24,11 @@ async def list_models(request: Request):
 
 
 @router.post("/chat/completions")
-async def chat_completions(request: Request, body: ChatCompletionRequest):
+async def chat_completions(
+    request: Request,
+    body: ChatCompletionRequest,
+    principal: APIKey = Depends(check_permission(Permission.CHAT)),  # noqa: B008,
+):
     resolver = request.app.state.route_resolver
 
     try:
