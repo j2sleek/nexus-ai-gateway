@@ -6,6 +6,7 @@ from .base import BaseStreamNormalizer
 
 
 class AnthropicStreamNormalizer(BaseStreamNormalizer):
+    # type: ignore
     async def normalize_stream(
         self,
         provider_stream: AsyncIterator[Any],
@@ -24,10 +25,12 @@ class AnthropicStreamNormalizer(BaseStreamNormalizer):
         yield f"event: message_start\ndata: {json.dumps(message_start_data)}\n\n"
 
         async for chunk in provider_stream:
+            # Extract content from Anthropic completion field
+            content = chunk.get("completion", "")
             event_data = {
                 "type": "content_block_delta",
                 "index": 0,
-                "delta": {"type": "text_delta", "text": chunk.get("content", "")},
+                "delta": {"type": "text_delta", "text": content},
             }
             yield f"event: content_block_delta\ndata: {json.dumps(event_data)}\n\n"
 

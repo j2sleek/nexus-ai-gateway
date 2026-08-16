@@ -1,6 +1,6 @@
 import asyncio
 import random
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
 
 T = TypeVar("T")
@@ -36,7 +36,13 @@ class RetryStrategy:
         # Never exceed remaining time budget or max_delay
         return min(calculated_delay, remaining_time, self.max_delay)
 
-    async def execute(self, func: Callable[[], T], timeout: float, *args: Any, **kwargs: Any) -> T:
+    async def execute(
+        self,
+        func: Callable[..., Awaitable[T]],
+        timeout: float,
+        *args: Any,
+        **kwargs: Any,
+    ) -> T:
         last_error: Exception | None = None
         start_time = asyncio.get_event_loop().time()
 
@@ -67,4 +73,6 @@ class RetryStrategy:
                         await asyncio.sleep(delay)
                 else:
                     raise RetryExhausted(f"Exhausted {self.max_attempts} attempts") from e
-        raise last_error
+        if last_error:
+            raise last_error
+        raise RetryExhausted("Max attempts reached without error")

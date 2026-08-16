@@ -49,9 +49,13 @@ class ResilienceProxy(BaseProvider):
     async def chat(self, request: dict[str, Any]) -> dict[str, Any]:
         return await self._wrap_call(self.provider.chat, request)
 
-    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
+    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         # Timeout for streaming is handled during individual chunk retrieval or initial connection
-        async for chunk in self.provider.stream_chat(request):
+        from collections.abc import AsyncGenerator
+        from typing import cast
+
+        provider_stream = self.provider.stream_chat(request)
+        async for chunk in cast(AsyncGenerator[Any, None], provider_stream):
             yield chunk
 
     async def embeddings(self, request: dict[str, Any]) -> dict[str, Any]:

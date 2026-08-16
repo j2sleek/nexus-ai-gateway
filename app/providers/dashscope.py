@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from app.models.capability import Capability
@@ -16,7 +17,7 @@ class DashScopeProvider(BaseProvider):
     async def chat(self, request: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
 
-    async def stream_chat(self, request: dict[str, Any]) -> Any:
+    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
         raise NotImplementedError
 
     async def embeddings(self, request: dict[str, Any]) -> dict[str, Any]:

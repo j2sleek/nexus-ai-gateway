@@ -49,11 +49,11 @@ class RouteResolver:
         selected = ranked[0]
 
         logger.info(
-            "Routing decision",
-            provider=selected.provider,
-            model=selected.id,
-            reason="success",
-            fallback=len(ranked) > 1,
+            "Routing decision: provider=%s, model=%s, reason=%s, fallback=%s",
+            selected.provider,
+            selected.id,
+            "success",
+            len(ranked) > 1,
         )
 
         return RoutingResult(

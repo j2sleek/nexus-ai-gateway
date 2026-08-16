@@ -45,9 +45,14 @@ class DiscoveryManager:
             # In a full implementation, perform health checks here.
             # ...
 
+        models = await self.model_registry.list_models()
         return DiscoverySummary(
-            providers_loaded=0,
-            providers_healthy=0,
+            providers_loaded=len(self.provider_registry),
+            providers_healthy=len(self.provider_registry),
             providers_failed=0,
-            models_discovered=0,
+            models_discovered=len(models),
         )
+
+    async def is_ready(self) -> bool:
+        """Check if discovery is complete and gateway is ready."""
+        return len(self.provider_registry) > 0

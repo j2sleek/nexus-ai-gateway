@@ -39,7 +39,7 @@ class BaseStreamNormalizer(ABC):
             raise
 
     @abstractmethod
-    async def normalize_stream(
+    def normalize_stream(
         self,
         provider_stream: AsyncIterator[Any],
         request_data: dict[str, Any],

@@ -7,6 +7,7 @@ from .base import BaseStreamNormalizer
 
 
 class OpenAIStreamNormalizer(BaseStreamNormalizer):
+    # type: ignore
     async def normalize_stream(
         self,
         provider_stream: AsyncIterator[Any],
@@ -15,7 +16,13 @@ class OpenAIStreamNormalizer(BaseStreamNormalizer):
 
         async for chunk in provider_stream:
             # Normalize chunk to OpenAI format
-            # Assuming provider chunk has 'content' or is already structured
+            # Extract content from choices
+            choices = chunk.get("choices", [])
+            content = ""
+            if choices:
+                delta = choices[0].get("delta", {})
+                content = delta.get("content", "")
+
             normalized_chunk = {
                 "id": "chatcmpl-" + str(int(time.time())),
                 "object": "chat.completion.chunk",
@@ -24,7 +31,7 @@ class OpenAIStreamNormalizer(BaseStreamNormalizer):
                 "choices": [
                     {
                         "index": 0,
-                        "delta": {"content": chunk.get("content", "")},
+                        "delta": {"content": content},
                         "finish_reason": None,
                     }
                 ],

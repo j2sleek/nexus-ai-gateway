@@ -39,7 +39,7 @@ class ProviderRegistry:
         """Check if a provider exists."""
         return name in self._providers
 
-    def list(self) -> list[BaseProvider]:
+    def list_providers(self) -> list[BaseProvider]:
         """Return all registered providers."""
         return list(self._providers.values())
 

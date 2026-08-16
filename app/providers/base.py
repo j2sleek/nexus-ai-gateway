@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from app.models.capability import Capability
@@ -33,7 +34,7 @@ class BaseProvider(ABC):
         ...
 
     @abstractmethod
-    async def stream_chat(self, request: dict[str, Any]) -> Any:
+    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
         """Execute a streaming chat completion request."""
         ...
 

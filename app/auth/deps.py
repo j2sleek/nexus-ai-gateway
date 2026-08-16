@@ -2,7 +2,7 @@ import secrets
 
 import yaml
 from fastapi import Depends, HTTPException, Request, Security
-from fastapi.security import APIKeyHeader, HTTPBearer
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from app.core.config import settings
@@ -33,7 +33,7 @@ def get_api_keys() -> dict[str, APIKey]:
 
 
 async def _get_bearer(
-    bearer: HTTPBearer = Depends(bearer_scheme),  # noqa: B008
+    bearer: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),  # noqa: B008
 ) -> str | None:
     if bearer:
         return bearer.credentials
