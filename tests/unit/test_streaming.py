@@ -43,10 +43,10 @@ async def test_normalize_stream_with_lifecycle_exception():
         raise Exception("stream error")
 
     events = []
-    # This should yield an error event, then raise
-    with pytest.raises(Exception, match="stream error"):
-        async for event in normalizer.normalize_stream_with_lifecycle(mock_stream(), {}):
-            events.append(event)
+    # This should yield an error event
+    async for event in normalizer.normalize_stream_with_lifecycle(mock_stream(), {}):
+        events.append(event)
 
     assert events[0] == "data: chunk1"
     assert "error" in events[1]
+    assert "stream error" in events[1]

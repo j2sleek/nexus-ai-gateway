@@ -55,8 +55,15 @@ class ResilienceProxy(BaseProvider):
         from typing import cast
 
         provider_stream = self.provider.stream_chat(request)
-        async for chunk in cast(AsyncGenerator[Any, None], provider_stream):
-            yield chunk
+        try:
+            async for chunk in cast(AsyncGenerator[Any, None], provider_stream):
+                yield chunk
+        except Exception as e:
+            # Re-raise to be handled by the normalizer's lifecycle handler
+            # or could be handled here to terminate the stream early.
+            # Given the current architecture, passing it through to the normalizer is fine
+            # as long as the normalizer handles it correctly and does not re-raise.
+            raise e
 
     async def embeddings(self, request: dict[str, Any]) -> dict[str, Any]:
         return await self._wrap_call(self.provider.embeddings, request)

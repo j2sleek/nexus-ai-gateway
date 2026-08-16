@@ -36,7 +36,7 @@ class BaseStreamNormalizer(ABC):
             record_stream_event("stream_failed", self.provider_name, self.model_name, duration)
             # Normalize error termination event
             yield f'data: {{"error": "{e!s}"}}\n\n'
-            raise
+            # Removed the re-raise to prevent 500
 
     @abstractmethod
     def normalize_stream(
