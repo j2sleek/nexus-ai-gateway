@@ -14,13 +14,25 @@ router = APIRouter(prefix="/v1")
 @router.get("/models")
 async def list_models(
     request: Request,
+    capability: Capability | None = None,
     principal: APIKey = Depends(check_permission(Permission.CHAT)),  # noqa: B008
 ):
     registry = request.app.state.model_registry
-    models = await registry.list_models()
+    if capability:
+        models = await registry.list_by_capability(capability)
+    else:
+        models = await registry.list_models()
     return {
         "object": "list",
-        "data": [{"id": m.id, "object": "model", "owned_by": m.provider} for m in models],
+        "data": [
+            {
+                "id": m.id,
+                "object": "model",
+                "owned_by": m.provider,
+                "capabilities": sorted([c.value for c in m.capabilities]),
+            }
+            for m in models
+        ],
     }
 
 
