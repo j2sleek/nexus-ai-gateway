@@ -5,6 +5,7 @@ from app.auth.deps import check_permission
 from app.auth.models import APIKey, Permission
 from app.core.exceptions import RoutingError
 from app.models.anthropic import AnthropicRequest, AnthropicResponse
+from app.models.capability import Capability
 from app.streaming.anthropic import AnthropicStreamNormalizer
 
 router = APIRouter(prefix="/v1/anthropic")
@@ -19,7 +20,10 @@ async def messages(
     resolver = request.app.state.route_resolver
 
     try:
-        routing_result = await resolver.resolve(requested_model=body.model)
+        routing_result = await resolver.resolve(
+            requested_model=body.model,
+            required_capability=Capability.CHAT,
+        )
         provider = request.app.state.provider_registry.get(routing_result.provider)
 
         # Call provider (assuming OpenAI-compatible request format, needing translation)

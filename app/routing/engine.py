@@ -71,6 +71,11 @@ class RouteResolver:
             model = await self.model_registry.get_model(requested_model)
             if not model:
                 raise ModelNotFound(f"Model {requested_model} not found.")
+            if required_capability and not model.has(required_capability):
+                raise CapabilityNotSupported(
+                    f"Model {requested_model} does not "
+                    f"support capability {required_capability.value}."
+                )
             return [model]
 
         if required_capability:

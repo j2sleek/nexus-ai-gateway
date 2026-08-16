@@ -27,7 +27,9 @@ class ModelInfo:
     output_cost_per_million: float | None = None
 
     # Runtime metadata
-    capabilities: frozenset[Capability] = field(default_factory=frozenset)
+    capabilities: frozenset[Capability] = field(
+        default_factory=lambda: frozenset([Capability.CHAT])
+    )
 
     # Modalities
     modalities: frozenset[str] = field(default_factory=frozenset)
