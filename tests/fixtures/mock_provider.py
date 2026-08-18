@@ -34,7 +34,7 @@ class MockProvider(BaseProvider):
             "usage": {"input_tokens": 10, "output_tokens": 20},
         }
 
-    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:
+    async def stream_chat(self, request: dict[str, Any]) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         yield {"content": "chunk"}
 
     async def embeddings(self, request: dict[str, Any]) -> dict[str, Any]:

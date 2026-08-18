@@ -17,19 +17,19 @@ Features
 - Extensible provider framework
 - Production-ready FastAPI foundation
 
-Supported Providers
+Provider Availability
 
 The gateway is designed to support multiple AI providers through a common abstraction layer.
 
-Current provider integrations include:
-
-- LiteLLM
-- Alibaba DashScope
-- Google Gemini
-- Mistral AI
-- OpenRouter
-- DeepSeek
-- Ollama
+| Provider | Status |
+| :--- | :--- |
+| LiteLLM | Implemented |
+| Ollama | Implemented |
+| DashScope | Planned / Not Implemented |
+| Gemini | Planned / Not Implemented |
+| Mistral | Planned / Not Implemented |
+| OpenRouter | Planned / Not Implemented |
+| DeepSeek | Planned / Not Implemented |
 
 Additional providers can be added without modifying the routing engine.
 

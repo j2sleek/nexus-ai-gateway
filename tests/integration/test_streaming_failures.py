@@ -13,7 +13,7 @@ from tests.fixtures.mock_provider import MockProvider
 
 
 class FailingStreamProvider(MockProvider):
-    async def stream_chat(self, request: dict) -> AsyncGenerator[Any, None]:
+    async def stream_chat(self, request: dict) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         yield {"choices": [{"delta": {"content": "Hello"}}]}
         yield {"choices": [{"delta": {"content": " world"}}]}
         raise Exception("Provider stream failure")

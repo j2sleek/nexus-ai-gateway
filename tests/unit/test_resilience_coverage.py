@@ -23,7 +23,7 @@ class MockProvider(BaseProvider):
     async def chat(self, request: dict) -> dict:
         return {"response": "ok"}
 
-    async def stream_chat(self, request: dict) -> AsyncGenerator[dict, None]:
+    async def stream_chat(self, request: dict) -> AsyncGenerator[dict, None]:  # type: ignore[override]
         yield {"chunk": "data"}
 
     async def embeddings(self, request: dict) -> dict:
